@@ -13,9 +13,6 @@
       "path": "./apps/athena-control"
     },
     {
-      "path": "./apps/athena-api-e2e"
-    },
-    {
       "path": "./apps/athena-api"
     }
   ]
