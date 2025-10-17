@@ -1,0 +1,26 @@
+{
+  "name": "@athena-lms/athena-api-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@athena-lms/athena-api"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/athena-api-e2e/jest.config.ts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "@athena-lms/athena-api:build",
+          "@athena-lms/athena-api:serve"
+        ]
+      }
+    }
+  }
+}

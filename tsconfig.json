@@ -5,6 +5,18 @@
   "references": [
     {
       "path": "./apps/athena-learn"
+    },
+    {
+      "path": "./apps/athena-studio"
+    },
+    {
+      "path": "./apps/athena-control"
+    },
+    {
+      "path": "./apps/athena-api-e2e"
+    },
+    {
+      "path": "./apps/athena-api"
     }
   ]
 }
