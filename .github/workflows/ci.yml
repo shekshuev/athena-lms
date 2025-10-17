@@ -4,29 +4,42 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
+    branches:
+      - main
+      - develop
 
 permissions:
   actions: read
   contents: read
 
 jobs:
-  main:
+  ci:
+    name: Lint, Test, Build, Audit
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          filter: tree:0
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
-      - run: npm ci --legacy-peer-deps
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
-      - run: npx nx run-many -t lint test build typecheck
+      - name: Security audit
+        run: npm audit --audit-level=moderate
 
-      - run: npx nx fix-ci
+      - name: Run Nx tasks
+        run: npx nx run-many -t lint test build typecheck --parallel=3
+
+      - name: Nx fix CI cache
         if: always()
+        run: npx nx fix-ci
