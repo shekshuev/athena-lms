@@ -1,6 +1,6 @@
-import NxWelcome from './nx-welcome';
+import { Route, Routes, Link } from "react-router-dom";
 
-import { Route, Routes, Link } from 'react-router-dom';
+import NxWelcome from "./nx-welcome";
 
 export function App() {
   return (
@@ -28,8 +28,7 @@ export function App() {
           path="/"
           element={
             <div>
-              This is the generated root route.{' '}
-              <Link to="/page-2">Click here for page 2.</Link>
+              This is the generated root route. <Link to="/page-2">Click here for page 2.</Link>
             </div>
           }
         />
