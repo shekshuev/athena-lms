@@ -1,4 +1,7 @@
 {
+  "tui": {
+    "enabled": false
+  },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
@@ -67,6 +70,16 @@
         "targetName": "test"
       },
       "exclude": ["apps/athena-api-e2e/**/*"]
+    },
+    {
+      "plugin": "@nx/js/typescript",
+      "include": ["libs/*"],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        }
+      },
+      "exclude": ["libs/*"]
     }
   ],
   "targetDefaults": {

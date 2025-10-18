@@ -14,6 +14,9 @@
     },
     {
       "path": "./apps/athena-api"
+    },
+    {
+      "path": "./libs/shared"
     }
   ]
 }

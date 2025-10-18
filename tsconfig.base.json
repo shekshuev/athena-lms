@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDir": ".",
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
@@ -16,6 +17,9 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@athena-lms/source"]
+    "customConditions": ["@athena-lms/source"],
+    "paths": {
+      "@athena-lms/shared/*": ["./libs/shared/src/*"]
+    }
   }
 }
