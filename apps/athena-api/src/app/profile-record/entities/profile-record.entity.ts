@@ -1,16 +1,5 @@
 import { ALL_PROFILE_RECORD_TYPES, ProfileRecordType } from "@athena-lms/shared";
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from "typeorm";
-
-import { Account } from "../../account";
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 /**
  * @Entity ProfileRecord
@@ -24,13 +13,11 @@ export class ProfileRecord {
   id!: string;
 
   /**
-   * Associated account.
+   * Associated account identifier.
+   * Stored as a UUID string without foreign key constraint.
    */
-  @ManyToOne(() => Account, account => account.profileRecords, {
-    onDelete: "CASCADE",
-  })
-  @JoinColumn({ name: "account_id" })
-  account!: Account;
+  @Column({ name: "account_id", type: "uuid" })
+  accountId!: string;
 
   /**
    * Name of the field (e.g. "first_name", "city", "degree").
