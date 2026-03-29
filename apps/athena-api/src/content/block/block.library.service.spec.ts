@@ -1,4 +1,4 @@
-import { BlockType, Pageable, Policy } from "@athena/types";
+import { BlockType, Pageable, Policy, QuizExamSource, QuizQuestionType } from "@athena/types";
 import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
@@ -39,11 +39,14 @@ describe("BlockLibraryService", () => {
 
   beforeEach(async () => {
     mockQueryBuilder = {
+      where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       getManyAndCount: jest.fn(),
+      getMany: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -234,6 +237,99 @@ describe("BlockLibraryService", () => {
         ForbiddenException,
       );
       expect(libraryRepo.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("generateExamQuestions", () => {
+    const mockQuestionBlock1 = {
+      id: "lib-block-1",
+      type: BlockType.QuizQuestion,
+      tags: ["sql", "mandatory"],
+      content: {
+        type: QuizQuestionType.Single,
+        question: { json: { text: "Q1" } },
+        options: [{ id: "opt-1", text: "A", isCorrect: true }],
+        explanation: "Exp 1",
+      },
+    } as any;
+
+    const mockQuestionBlock2 = {
+      id: "lib-block-2",
+      type: BlockType.QuizQuestion,
+      tags: ["sql"],
+      content: {
+        type: QuizQuestionType.Open,
+        question: { json: { text: "Q2" } },
+        correctAnswerText: "Answer",
+      },
+    } as any;
+
+    it("should generate purely random questions if no mandatory tags provided", async () => {
+      const source: QuizExamSource = {
+        includeTags: ["sql"],
+        count: 2,
+      };
+
+      mockQueryBuilder.getMany.mockResolvedValue([mockQuestionBlock1, mockQuestionBlock2]);
+
+      const result = await service.generateExamQuestions(source);
+
+      expect(libraryRepo.createQueryBuilder).toHaveBeenCalledWith("lb");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("lb.type = :type", { type: BlockType.QuizQuestion });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("lb.tags && :includeTags", {
+        includeTags: ["sql"],
+      });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("RANDOM()");
+      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(2);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBeDefined();
+      expect(result[0].id).not.toBe("lib-block-1");
+      expect(result[0].id).not.toBe("lib-block-2");
+      expect(result[0].originalBlockId).toBeDefined();
+    });
+
+    it("should include mandatory questions and fill the rest with random ones", async () => {
+      const source: QuizExamSource = {
+        includeTags: ["sql"],
+        mandatoryTags: ["mandatory"],
+        count: 2,
+      };
+
+      mockQueryBuilder.getMany.mockResolvedValueOnce([mockQuestionBlock1]).mockResolvedValueOnce([mockQuestionBlock2]);
+
+      const result = await service.generateExamQuestions(source);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("lb.tags && :mandatoryTags", {
+        mandatoryTags: ["mandatory"],
+      });
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("lb.id NOT IN (:...mandatoryIds)", {
+        mandatoryIds: ["lib-block-1"],
+      });
+      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(1);
+
+      expect(result).toHaveLength(2);
+      const originalIds = result.map(r => r.originalBlockId);
+      expect(originalIds).toContain("lib-block-1");
+      expect(originalIds).toContain("lib-block-2");
+    });
+
+    it("should apply excludeTags to both mandatory and random queries", async () => {
+      const source: QuizExamSource = {
+        includeTags: ["sql"],
+        mandatoryTags: ["mandatory"],
+        excludeTags: ["hard"],
+        count: 1,
+      };
+
+      mockQueryBuilder.getMany.mockResolvedValueOnce([]).mockResolvedValueOnce([mockQuestionBlock2]);
+
+      await service.generateExamQuestions(source);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("NOT (lb.tags && :excludeTags)", {
+        excludeTags: ["hard"],
+      });
     });
   });
 });

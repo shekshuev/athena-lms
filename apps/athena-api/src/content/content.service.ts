@@ -1,9 +1,11 @@
-import { BlockType } from "@athena/types";
+import { BlockType, QuizAttemptQuestionFullSnapshot, QuizExamSource } from "@athena/types";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
 
+import { BlockLibraryService } from "./block/block.library.service";
 import { BlockService } from "./block/block.service";
 import { CodeBlockContentDto } from "./block/dto/content-payload.dto";
+import { Block } from "./block/entities/block.entity";
 import { CourseService } from "./course/course.service";
 import { CreateCourseDto } from "./course/dto/create.dto";
 import { ReadCourseDto } from "./course/dto/read.dto";
@@ -16,6 +18,7 @@ export class ContentService {
   constructor(
     private readonly courseService: CourseService,
     private readonly blockService: BlockService,
+    private readonly blockLibraryService: BlockLibraryService,
     private readonly lessonService: LessonService,
     private readonly dataSource: DataSource,
   ) {}
@@ -75,5 +78,13 @@ export class ContentService {
 
   getLessonsByCourseId(courseId: string): Promise<Lesson[]> {
     return this.lessonService.findAllInternal(courseId);
+  }
+
+  getBlockInternal(blockId: string): Promise<Block> {
+    return this.blockService.findOneInternal(blockId);
+  }
+
+  generateExamQuestions(source: QuizExamSource): Promise<QuizAttemptQuestionFullSnapshot[]> {
+    return this.blockLibraryService.generateExamQuestions(source);
   }
 }

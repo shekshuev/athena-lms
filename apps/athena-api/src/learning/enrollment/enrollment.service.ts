@@ -11,7 +11,7 @@ import { UpdateEnrollmentDto } from "./dto/update.dto";
 import { Enrollment } from "./entities/enrollment.entity";
 import { BaseService } from "../../base/base.service";
 import { IdentityService } from "../../identity";
-import { AthenaEvent, EnrollmentCreatedEvent } from "../../shared/events/types";
+import { AthenaEvent, EnrollmentCreatedEvent, EnrollmentDeletedEvent } from "../../shared/events/types";
 import { Cohort } from "../cohort/entities/cohort.entity";
 
 /**
@@ -135,12 +135,7 @@ export class EnrollmentService extends BaseService<Enrollment> {
 
       const saved = await manager.save(Enrollment, entity);
 
-      const event: EnrollmentCreatedEvent = {
-        id: saved.id,
-        userId: saved.ownerId,
-        cohortId: saved.cohortId,
-        courseId: cohort.courseId,
-      };
+      const event = new EnrollmentCreatedEvent(saved.id, saved.ownerId, saved.cohortId, cohort.courseId);
 
       await this.outboxService.save(manager, AthenaEvent.ENROLLMENT_CREATED, event);
 
@@ -207,12 +202,12 @@ export class EnrollmentService extends BaseService<Enrollment> {
     try {
       const manager = queryRunner.manager;
 
-      const event = {
-        id: enrollment.id,
-        userId: enrollment.ownerId,
-        cohortId: enrollment.cohortId,
-        courseId: enrollment.cohort.courseId,
-      };
+      const event = new EnrollmentDeletedEvent(
+        enrollment.id,
+        enrollment.ownerId,
+        enrollment.cohortId,
+        enrollment.cohort.courseId,
+      );
 
       await manager.remove(Enrollment, enrollment);
 

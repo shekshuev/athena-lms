@@ -3,6 +3,7 @@ import {
   CodeExecutionMode,
   ProgrammingLanguage,
   QuizExamContent,
+  QuizExamSource,
   QuizOption,
   QuizQuestionContent,
   QuizQuestionType,
@@ -10,6 +11,7 @@ import {
 } from "@athena/types";
 import { Type } from "class-transformer";
 import {
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -22,9 +24,25 @@ import {
   IsUUID,
   Max,
   Min,
+  Validate,
   ValidateIf,
   ValidateNested,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from "class-validator";
+
+@ValidatorConstraint({ name: "hasCorrectOption", async: false })
+export class HasCorrectOptionConstraint implements ValidatorConstraintInterface {
+  validate(options: QuizOptionDto[], _args: ValidationArguments) {
+    if (!Array.isArray(options)) return false;
+    return options.some(opt => opt.isCorrect === true);
+  }
+
+  defaultMessage(_args: ValidationArguments) {
+    return "At least one option must be marked as correct (isCorrect: true)";
+  }
+}
 
 /**
  * @class TextBlockContentDto
@@ -169,16 +187,19 @@ export class QuizQuestionContentDto implements QuizQuestionContent {
   /**
    * List of options. Required for Single/Multiple types.
    */
-  @IsOptional()
+  @ValidateIf(o => o.type === QuizQuestionType.Single || o.type === QuizQuestionType.Multiple)
+  @ArrayMinSize(2)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => QuizOptionDto)
+  @Validate(HasCorrectOptionConstraint)
   options?: QuizOptionDto[];
 
   /**
    * Regex or exact string match for Open questions.
    */
-  @IsOptional()
+  @ValidateIf(o => o.type === QuizQuestionType.Open)
+  @IsNotEmpty()
   @IsString()
   correctAnswerText?: string;
 
@@ -191,10 +212,21 @@ export class QuizQuestionContentDto implements QuizQuestionContent {
  * @class QuizExamSourceDto
  * @description Configuration for where to pull questions from for an exam.
  */
-class QuizExamSourceDto {
+class QuizExamSourceDto implements QuizExamSource {
   @IsArray()
   @IsString({ each: true })
-  tags!: string[];
+  @ArrayMinSize(1)
+  includeTags!: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  excludeTags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mandatoryTags?: string[];
 
   @IsInt()
   @Min(1)

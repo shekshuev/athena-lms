@@ -92,14 +92,18 @@ export interface QuizQuestionContent {
   explanation?: string;
 }
 
+export interface QuizExamSource {
+  includeTags: string[];
+  excludeTags?: string[];
+  mandatoryTags?: string[];
+  count: number;
+}
+
 export interface QuizExamContent {
   title: string;
   timeLimitMinutes?: number;
   passPercentage: number;
-  source: {
-    tags: string[];
-    count: number;
-  };
+  source: QuizExamSource;
 }
 
 export interface QuizQuestionBlockResponse extends BlockResponse {
@@ -141,3 +145,32 @@ export interface FilterLibraryBlockRequest {
 export type UpdateBlockRequest = Partial<CreateBlockRequest>;
 
 export type BlockContent = CodeBlockContent | TextBlockContent | QuizQuestionContent | QuizExamContent;
+
+export interface CheckQuizQuestionRequest {
+  selectedOptionIds?: string[];
+  textAnswer?: string;
+}
+
+export interface CheckQuizQuestionResponse {
+  isCorrect: boolean;
+  explanation?: string;
+}
+
+export interface ExamQuestionAnswer {
+  questionId: string;
+  selectedOptionIds?: string[];
+  textAnswer?: string;
+}
+
+export interface SubmitExamRequest {
+  answers: ExamQuestionAnswer[];
+}
+
+export interface SubmitExamResponse {
+  attemptId: string;
+  score: number;
+  passed: boolean;
+  passPercentage: number;
+  correctAnswers: number;
+  totalQuestions: number;
+}

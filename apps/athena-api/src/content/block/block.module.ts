@@ -22,6 +22,6 @@ import { Lesson } from "../lesson/entities/lesson.entity";
   ],
   providers: [BlockService, BlockLibraryService],
   controllers: [BlockController],
-  exports: [BlockService],
+  exports: [BlockService, BlockLibraryService],
 })
 export class BlockModule {}

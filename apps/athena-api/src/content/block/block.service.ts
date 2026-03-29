@@ -362,4 +362,15 @@ export class BlockService extends BaseService<Block> {
       throw new BadRequestException("Failed to initiate dry run");
     }
   }
+
+  /**
+   * Retrieves a single block by UUID for internal module use (bypasses ACL).
+   */
+  async findOneInternal(id: string): Promise<Block> {
+    const block = await this.blockRepo.findOne({ where: { id } });
+    if (!block) {
+      throw new NotFoundException(`Block with ID ${id} not found`);
+    }
+    return block;
+  }
 }

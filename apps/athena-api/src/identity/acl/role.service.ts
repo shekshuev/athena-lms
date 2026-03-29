@@ -197,7 +197,7 @@ export class RoleService extends BaseService<Role> {
 
       await manager.remove(Role, role);
 
-      const event: RoleDeletedEvent = { name: role.name };
+      const event = new RoleDeletedEvent(role.name);
       await this.outboxService.save(manager, AthenaEvent.ROLE_DELETED, event);
       await queryRunner.commitTransaction();
 

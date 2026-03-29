@@ -3,10 +3,15 @@ import { io, type Socket } from 'socket.io-client'
 
 export const useSocketStore = defineStore('socket', () => {
   const config = useRuntimeConfig()
+  const toast = useToast()
+
+  const { t } = useI18n()
 
   const socket = ref<Socket | null>(null)
   const isConnected = ref(false)
   const socketId = ref<string | null>(null)
+
+  const forcedClosedExams = ref<Record<string, unknown>>({})
 
   function connect() {
     if (socket.value?.connected) return

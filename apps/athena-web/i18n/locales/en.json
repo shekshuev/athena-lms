@@ -849,7 +849,11 @@
       "view-error": "Failed to save your reading progress. Check your connection.",
       "submission-sent": "Your solution has been submitted for grading.",
       "submission-error": "Failed to submit your solution. Please try again.",
-      "course-load-error": "Failed to load course progress. Please try again."
+      "course-load-error": "Failed to load course progress. Please try again.",
+      "submit-quiz-error": "Failed to submit your answer",
+      "get-active-exam-error": "Failed to get active exam attempt",
+      "start-exam-error": "Failed to start exam",
+      "submit-exam-error": "Failed to submit exam"
     },
     "library": {
       "created": "Template saved to library successfully",

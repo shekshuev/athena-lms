@@ -1,4 +1,11 @@
-import { ProgrammingLanguage, BlockType, BlockRequiredAction } from "./block";
+import {
+  ProgrammingLanguage,
+  BlockType,
+  BlockRequiredAction,
+  QuizQuestionType,
+  TextBlockContent,
+  QuizOption,
+} from "./block";
 
 export enum ProgressStatus {
   NOT_STARTED = "NOT_STARTED",
@@ -90,4 +97,41 @@ export interface StudentDashboardView {
   status: ProgressStatus;
   lessons: Record<string, StudentDashboardLessonView>;
   recentBadges: string[];
+}
+
+export enum QuizAttemptStatus {
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+}
+
+export interface QuizAttemptQuestionSnapshot {
+  id: string;
+  originalBlockId: string;
+  type: QuizQuestionType;
+  question: TextBlockContent;
+  options?: Omit<QuizOption, "isCorrect">[];
+}
+
+export interface QuizAttemptQuestionFullSnapshot extends QuizAttemptQuestionSnapshot {
+  options?: QuizOption[];
+  correctAnswerText?: string;
+  explanation?: string;
+}
+
+export interface QuizAttemptResponse {
+  id: string;
+  blockId: string;
+  status: QuizAttemptStatus;
+  questions: QuizAttemptQuestionSnapshot[];
+  score?: number;
+  timeLimitMinutes?: number;
+  startedAt: Date;
+  finishedAt?: Date;
+}
+
+export interface ExamForceClosedResult {
+  userId: string;
+  blockId: string;
+  score: number;
+  passed: boolean;
 }

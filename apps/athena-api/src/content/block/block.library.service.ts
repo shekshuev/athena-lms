@@ -1,7 +1,15 @@
-import { Pageable, Policy } from "@athena/types";
+import {
+  BlockType,
+  Pageable,
+  Policy,
+  QuizAttemptQuestionFullSnapshot,
+  QuizExamSource,
+  QuizQuestionContent,
+} from "@athena/types";
 import { ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { v4 as uuid } from "uuid";
 
 import { CreateLibraryBlockDto } from "./dto/create.library.dto";
 import { FilterLibraryBlockDto } from "./dto/filter.library.dto";
@@ -153,5 +161,64 @@ export class BlockLibraryService extends BaseService<LibraryBlock> {
     }
 
     await this.libraryRepo.remove(template);
+  }
+
+  /**
+   * Generates a snapshot of questions for a QuizExam based on tag rules.
+   * Internal method used by the Progress module when starting an exam.
+   */
+  async generateExamQuestions(source: QuizExamSource): Promise<QuizAttemptQuestionFullSnapshot[]> {
+    const { includeTags, excludeTags = [], mandatoryTags = [], count } = source;
+
+    let mandatoryBlocks: LibraryBlock[] = [];
+    if (mandatoryTags.length > 0) {
+      const qb = this.libraryRepo
+        .createQueryBuilder("lb")
+        .where("lb.type = :type", { type: BlockType.QuizQuestion })
+        .andWhere("lb.tags && :mandatoryTags", { mandatoryTags });
+
+      if (excludeTags.length > 0) {
+        qb.andWhere("NOT (lb.tags && :excludeTags)", { excludeTags });
+      }
+
+      mandatoryBlocks = await qb.limit(count).getMany();
+    }
+
+    const remainingCount = count - mandatoryBlocks.length;
+    let randomBlocks: LibraryBlock[] = [];
+
+    if (remainingCount > 0 && includeTags.length > 0) {
+      const qb = this.libraryRepo
+        .createQueryBuilder("lb")
+        .where("lb.type = :type", { type: BlockType.QuizQuestion })
+        .andWhere("lb.tags && :includeTags", { includeTags });
+
+      if (excludeTags.length > 0) {
+        qb.andWhere("NOT (lb.tags && :excludeTags)", { excludeTags });
+      }
+
+      if (mandatoryBlocks.length > 0) {
+        const mandatoryIds = mandatoryBlocks.map(b => b.id);
+        qb.andWhere("lb.id NOT IN (:...mandatoryIds)", { mandatoryIds });
+      }
+
+      randomBlocks = await qb.orderBy("RANDOM()").limit(remainingCount).getMany();
+    }
+
+    const allBlocks = [...mandatoryBlocks, ...randomBlocks];
+    const shuffled = allBlocks.sort(() => Math.random() - 0.5);
+
+    return shuffled.map(block => {
+      const content = block.content as QuizQuestionContent;
+      return {
+        id: uuid(),
+        originalBlockId: block.id,
+        type: content.type,
+        question: content.question,
+        options: content.options,
+        correctAnswerText: content.correctAnswerText,
+        explanation: content.explanation,
+      };
+    });
   }
 }

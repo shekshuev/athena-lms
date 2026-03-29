@@ -366,4 +366,23 @@ describe("BlockService", () => {
       await expect(service.dryRun(dryRunDto, USER_ID)).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe("findOneInternal", () => {
+    it("should return block if found (bypassing ACL)", async () => {
+      blockRepo.findOne.mockResolvedValue(mockBlock);
+
+      const result = await service.findOneInternal(BLOCK_ID);
+
+      expect(blockRepo.findOne).toHaveBeenCalledWith({
+        where: { id: BLOCK_ID },
+      });
+      expect(result).toEqual(mockBlock);
+    });
+
+    it("should throw NotFoundException if block missing", async () => {
+      blockRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.findOneInternal("bad-id")).rejects.toThrow(NotFoundException);
+    });
+  });
 });
